@@ -11,6 +11,7 @@ Lint/StructNewOverride:
 Metrics/AbcSize:
   Exclude:
     - "test/**/*"
+    - "lib/jeff.rb"
 Metrics/ClassLength:
   Exclude:
     - "lib/mws/**/client.rb"
@@ -28,6 +29,8 @@ Naming/AccessorMethodName:
 Naming/VariableNumber:
   Exclude:
     - "test/**/*"
+Security/Eval:
+  Enabled: false
 Style/OpenStructUse:
   Exclude:
     - "test/**/*"

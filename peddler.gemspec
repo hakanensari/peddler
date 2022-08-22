@@ -15,7 +15,6 @@ Gem::Specification.new do |gem|
   gem.files = Dir.glob('lib/**/*') + %w[LICENSE README.md]
 
   gem.add_dependency 'excon', '>= 0.50.0'
-  gem.add_dependency 'jeff', '~> 2.0'
   gem.add_dependency 'multi_xml', '>= 0.5.0'
 
   gem.required_ruby_version = '>= 2.7'
