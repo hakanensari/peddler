@@ -8,8 +8,8 @@ class TestErrors < IntegrationTest
 
   def test_invalid_key
     clients.each do |client|
+      client.aws_access_key_id = 'foo'
       assert_raises Peddler::Errors::InvalidAccessKeyId do
-        client.aws_access_key_id = 'foo'
         client.get_order('bar')
       end
     end
