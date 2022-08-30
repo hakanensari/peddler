@@ -2,30 +2,26 @@
 
 require 'helper'
 require 'null_client'
+require 'webmock/minitest'
 
 class TestPeddlerClient < MiniTest::Test
   def setup
-    Excon.defaults[:mock] = true
     @klass = Class.new(Null::Client)
     @client = @klass.new
     @client.configure_with_mock_data!
     @client.operation('Foo')
   end
 
-  def teardown
-    Excon.stubs.clear
-    Excon.defaults.delete(:mock)
-  end
-
   class HappyPath < TestPeddlerClient
     def setup
       @response_body = 'foo'
-      Excon.stub({}, body: @response_body, status: 200)
+      stub_request(:post, /amazonservices/)
+        .to_return(body: @response_body, status: 200)
       super
     end
 
     def test_user_agent
-      assert @client.connection.data[:headers].key?('User-Agent')
+      assert @client.connection.default_options.headers['User-Agent']
     end
 
     def test_inheritance_of_parents_params
@@ -92,7 +88,7 @@ class TestPeddlerClient < MiniTest::Test
 
     def test_running_a_request
       res = @client.run
-      assert_equal @response_body, res.body
+      assert_equal @response_body, res.body.to_s
     end
 
     def test_clearing_body_when_run_succeeds
@@ -108,27 +104,6 @@ class TestPeddlerClient < MiniTest::Test
 
       assert_equal @response_body, chunks
     end
-
-    class Instrumentor
-      class << self
-        attr_accessor :events
-
-        def instrument(name, params = {})
-          events.update(name => params)
-          yield if block_given?
-        end
-      end
-
-      @events = {}
-    end
-
-    def test_that_request_preserves_user_agent
-      @client.defaults.update(instrumentor: Instrumentor)
-      @client.run
-      headers = Instrumentor.events['excon.request'][:headers]
-
-      assert headers.key?('User-Agent')
-    end
   end
 
   class MWSErrorPath < TestPeddlerClient
@@ -140,7 +115,8 @@ class TestPeddlerClient < MiniTest::Test
           </Error>
         </ErrorResponse>
       XML
-      Excon.stub({}, body: body, status: 503)
+      stub_request(:post, /amazonservices/)
+        .to_return(headers: { 'Content-Type' => 'text/xml' }, body: body, status: 503)
       super
     end
 
@@ -168,21 +144,19 @@ class TestPeddlerClient < MiniTest::Test
           </Error>
         </ErrorResponse>
       XML
-      Excon.stub({}, body: body, status: 500)
+      stub_request(:post, /amazonservices/)
+        .to_return(headers: { 'Content-Type' => 'text/xml' }, body: body, status: 500)
       super
     end
 
     def test_error_handling
-      assert_raises Excon::Error::InternalServerError do
-        @client.run
-      end
+      # doesn't raise anymore
+      @client.run
     end
 
     def test_it_does_not_clear_body_when_run_fails
       @client.body = 'foo'
-      assert_raises Excon::Error::InternalServerError do
-        @client.run
-      end
+      @client.run
       refute_nil @client.body
     end
   end

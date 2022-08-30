@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'excon'
-require 'forwardable'
 require 'peddler/errors/class_generator'
 require 'peddler/errors/parser'
 
@@ -9,29 +7,24 @@ module Peddler
   module Errors
     # @!visibility private
     class Builder
-      extend Forwardable
-
       DIGIT_AS_FIRST_CHAR = /^\d/.freeze
       private_constant :DIGIT_AS_FIRST_CHAR
 
-      def_delegator :error, :response
+      attr_reader :response
 
-      def self.call(error)
-        new(error).build
+      def self.call(response)
+        new(response).build
       end
 
-      attr_reader :error
-
-      def initialize(error)
-        @error = error
+      def initialize(response)
+        @response = Parser.new(response)
       end
 
       def build
-        parse_original_response
         return if no_error_response?
         return if bad_class_name?
 
-        error_class.new(error_message, error)
+        error_class.new(error_message, response.__getobj__)
       end
 
       private
@@ -54,10 +47,6 @@ module Peddler
 
       def error_message
         response.message
-      end
-
-      def parse_original_response
-        error.instance_variable_set :@response, Parser.new(error.response)
       end
     end
   end

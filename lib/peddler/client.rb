@@ -92,7 +92,7 @@ module Peddler
 
     # @!visibility private
     def defaults
-      @defaults ||= { expects: 200 }
+      @defaults ||= {}
     end
 
     # @!visibility private
@@ -113,13 +113,20 @@ module Peddler
     # @!visibility private
     def run(&block)
       opts = build_options
-      opts.store(:response_block, block) if block
       res = post(opts)
-      self.body = nil if res.status == 200
+      unless res.status == 200
+        handle_http_status_error(res)
+        return res
+      end
 
-      parser.new(res, encoding)
-    rescue ::Excon::Error::HTTPStatus => e
-      handle_http_status_error(e)
+      self.body = nil
+      if block
+        res.body.each do |chunk|
+          yield(chunk, nil, nil)
+        end
+      else
+        parser.new(res, encoding)
+      end
     end
 
     private
@@ -147,13 +154,13 @@ module Peddler
     end
 
     def build_options
-      opts = defaults.merge(query: operation, headers: headers)
+      opts = defaults.merge(params: operation, headers: headers)
       body ? opts.update(body: body) : opts
     end
 
-    def handle_http_status_error(error)
-      new_error = Errors::Builder.call(error)
-      raise new_error || error
+    def handle_http_status_error(res)
+      new_error = Errors::Builder.call(res)
+      raise new_error if new_error
     end
   end
 end

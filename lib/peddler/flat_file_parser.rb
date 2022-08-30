@@ -37,13 +37,13 @@ module Peddler
     private
 
     def scrub_body!(encoding)
-      return if body.encoding == Encoding::UTF_8
+      return if body.to_s.encoding == Encoding::UTF_8
 
-      self.body = body.dup.force_encoding(content_charset || encoding)
+      __getobj__.instance_variable_set(:@body, body.to_s.force_encoding(content_charset || encoding))
     end
 
     def extract_content_and_summary
-      @content = body.encode('UTF-8', invalid: :replace, undef: :replace)
+      @content = body.to_s.encode('UTF-8', invalid: :replace, undef: :replace)
       return unless @content.match?(/\t\t.*\n\n/)
 
       @summary, @content = @content.split("\n\n", 2)

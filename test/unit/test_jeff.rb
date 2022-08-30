@@ -1,11 +1,7 @@
 # frozen_string_literal: true
 
-require 'minitest/autorun'
+require 'helper'
 require 'jeff'
-
-# We may need to set ciphers explicitly on jRuby
-# see https://github.com/jruby/warbler/issues/340
-Excon.defaults[:ciphers] = 'DEFAULT' if RUBY_ENGINE == 'jruby'
 
 class TestJeff < Minitest::Test
   def setup
@@ -69,14 +65,14 @@ class TestJeff < Minitest::Test
   def test_sets_user_agent_header
     client = @klass.new
     client.aws_endpoint = 'http://example.com/'
-    assert_includes client.connection.data[:headers]['User-Agent'], 'Peddler'
+    assert_includes client.connection.default_options.headers['User-Agent'], 'Peddler'
   end
 
   def test_allows_customizing_user_agent
     @klass.user_agent = 'CustomApp/1.0'
     client = @klass.new
     client.aws_endpoint = 'http://example.com/'
-    assert_equal 'CustomApp/1.0', client.connection.data[:headers]['User-Agent']
+    assert_equal 'CustomApp/1.0', client.connection.default_options.headers['User-Agent']
   end
 
   def test_escapes_space
@@ -103,72 +99,48 @@ class TestJeffInAction < Minitest::Test
     @client.aws_secret_access_key = 'bar'
   end
 
-  def teardown
-    Excon.stubs.clear
-  end
-
-  Excon::HTTP_VERBS.each do |method|
-    define_method "test_makes_#{method}_request" do
-      Excon.stub({}, status: 200)
-      assert_equal 200, @client.send(method, mock: true).status
-    end
+  def test_adds_default_query_values
+    options = {}
+    options = @client.add_default_query_values(options)
+    refute_empty options[:params]
   end
 
   def test_adds_content_md5_request_header_if_given_a_request_body
-    Excon.stub({}) do |request_params|
-      { body: request_params[:query]['ContentMD5Value'] }
-    end
-    refute_empty @client.post(body: 'foo', mock: true).body
+    options = { body: 'foo' }
+    options = @client.add_md5_digest(options)
+    assert options[:params]['ContentMD5Value']
   end
 
   def test_moves_query_to_body_if_post
-    Excon.stub({}) do |request_params|
-      { body: request_params[:body] }
-    end
-
-    res = @client.post(query: { foo: 'bar' }, mock: true)
-    assert_includes res.body, 'foo=bar'
+    options = { params: { foo: 'bar' } }
+    options = @client.move_query_to_body('post', options)
+    assert_equal 'foo=bar', options[:body]
   end
 
-  def test_does_not_move_query_to_body_if_body_is_set
-    Excon.stub({}) do |request_params|
-      { body: request_params[:body] }
-    end
-
-    res = @client.post(query: { foo: 'bar' }, body: 'baz', mock: true)
-    assert_equal 'baz', res.body
+  def test_does_not_move_query_to_body_if_post_but_body_is_set
+    options = { params: { foo: 'bar' }, body: 'baz' }
+    options = @client.move_query_to_body('post', options)
+    assert_equal 'baz', options[:body]
   end
 
   def test_does_not_move_query_to_body_if_not_post
-    Excon.stub({}) do |request_params|
-      { body: request_params[:body] }
-    end
-
-    res = @client.get(query: { foo: 'bar' }, mock: true)
-    assert_nil res.body
+    options = { params: { foo: 'bar' } }
+    options = @client.move_query_to_body('get', options)
+    assert_nil options[:body]
   end
 
   def test_sets_proper_encoding_header
-    Excon.stub({}) do |request_params|
-      { headers: request_params[:headers] }
-    end
-
-    res = @client.post(query: { foo: 'bar' }, mock: true)
-    assert_includes res.headers['Content-Type'], 'UTF-8'
+    options = { params: { foo: 'bar' } }
+    options = @client.move_query_to_body('post', options)
+    assert_includes options[:headers]['Content-Type'], 'UTF-8'
   end
 
-  # def test_gets_from_an_actual_endpoint
-  #   @client.aws_endpoint = 'https://mws.amazonservices.com/Sellers/2011-07-01'
-  #   res = @client.post(query: { 'Action' => 'GetServiceStatus' })
-  #   assert_equal 200, res.status
-  # end
-
   def test_has_no_proxy_by_default
-    refute @client.connection.data[:proxy]
+    assert_empty @client.connection.default_options.proxy
   end
 
   def test_sets_proxy
     @client.proxy = 'http://my.proxy:4321'
-    assert @client.connection.data[:proxy]
+    refute_empty @client.connection.default_options.proxy
   end
 end

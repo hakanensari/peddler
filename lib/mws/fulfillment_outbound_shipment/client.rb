@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'peddler/client'
-require 'excon'
 
 module MWS
   module FulfillmentOutboundShipment

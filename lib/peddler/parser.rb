@@ -24,7 +24,7 @@ module Peddler
 
       def xml?(res)
         return true if res.headers['Content-Type'].start_with?('text/xml')
-        return true if res.body.start_with?('<?xml')
+        return true if res.body.to_s.start_with?('<?xml')
 
         false
       end

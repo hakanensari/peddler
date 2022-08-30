@@ -1,12 +1,27 @@
 # frozen_string_literal: true
 
-require 'excon'
-
 require 'base64'
 require 'openssl'
 require 'time'
+require 'uri'
+
+require 'http'
+require 'multi_xml'
 
 require 'peddler/version'
+
+# XML adapter
+module XMLAdapter
+  def self.encode(_)
+    raise
+  end
+
+  def self.decode(str)
+    MultiXml.parse(str)
+  end
+end
+
+HTTP::MimeType.register_adapter 'text/xml', XMLAdapter
 
 # Jeff mixes in client behaviour for Amazon Web Services (AWS) that require
 # Signature version 2 authentication.
@@ -107,11 +122,7 @@ module Jeff
 
   # A reusable HTTP connection.
   def connection
-    @connection ||= Excon.new(aws_endpoint, connection_params)
-  end
-
-  def connection_params
-    @connection_params ||= default_connection_params
+    @connection ||= HTTP::Client.new.headers('User-Agent' => self.class.user_agent)
   end
 
   attr_accessor :aws_endpoint
@@ -127,61 +138,75 @@ module Jeff
   end
 
   def proxy=(url)
-    connection_params.store(:proxy, url)
+    uri = URI(url)
+    @connection = connection.via(uri.hostname, uri.port, uri.user, uri.password)
   end
 
   # Generate HTTP request verb methods.
-  Excon::HTTP_VERBS.each do |method|
+  %w[get post].each do |verb|
     eval <<-RUBY, binding, __FILE__, __LINE__ + 1
-      def #{method}(options = {})                           # def post(options = {})
-        options.store(:method, :#{method})                  #   options.store(:method, :post)
-        add_md5_digest options                              #   add_md_5_digest_options
-        sign options                                        #   sign options
-        #{'move_query_to_body options' if method == 'post'} #   move_query_to_body options
-        connection.request(options)                         #   connection.request(options)
-      end                                                   # end
+      def #{verb}(options = {})                          # def post(options = {})
+        options = options.dup                            #   options = options.dup
+        uri = URI(aws_endpoint)                          #   uri = URI(aws_endpoint)
+        options = add_default_query_values(options)      #   options = add_default_query_values(options)
+        options = add_md5_digest(options)                #   options = add_md_5_digest(options)
+        options = sign('#{verb}', uri, options)          #   options = sign(options)
+        options = move_query_to_body('#{verb}', options) #   options = move_query_to_body('post', options)
+
+        connection.#{verb}(uri, options)                 #   connection.post(aws_endpoint, options)
+      end                                                # end
     RUBY
   end
 
-  private
-
-  def default_connection_params
-    {
-      headers: { 'User-Agent' => self.class.user_agent },
-      expects: 200,
-      omit_default_port: true
-    }
+  def add_default_query_values(options)
+    options[:params] = default_query_values.merge(options.fetch(:params, {}))
+    options
   end
 
   def add_md5_digest(options)
-    return unless options.key?(:body)
+    options = options.dup
+    return options unless options.key?(:body)
 
     md5 = Content.new(options[:body]).md5
-    query = options[:query] ||= {}
-    query.store('ContentMD5Value', md5)
+    params = options[:params] ||= {}
+    params.store('ContentMD5Value', md5)
+
+    options
   end
 
-  def sign(options)
+  def sign(verb, uri, options)
+    options = options.dup
+
     # Build query string.
-    query_values = default_query_values.merge(options.fetch(:query, {}))
-    query_string = Query.new(query_values).to_s
+    params = options[:params]
+    query_string = Query.new(params).to_s
 
     # Generate signature.
     signature = Signer
-                .new(options[:method], connection.data[:host], options[:path] || connection.data[:path], query_string)
+                .new(verb, uri.host, uri.path, query_string)
                 .sign_with(aws_secret_access_key)
 
-    # Append escaped signature to query.
-    options.store(:query, "#{query_string}&Signature=#{Utils.escape(signature)}")
+    # Append escaped signature to params.
+    params.store('Signature', signature)
+    # options.store(:params, "#{query_string}&Signature=#{Utils.escape(signature)}")
+
+    options
   end
 
-  def move_query_to_body(options)
-    return if options[:body]
+  def move_query_to_body(verb, options)
+    options = options.dup
+
+    return options unless verb == 'post'
+    return options if options[:body]
 
     options[:headers] ||= {}
     options[:headers].store('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8')
-    options.store(:body, options.delete(:query))
+    options.store(:body, Query.new(options.delete(:params)).to_s)
+
+    options
   end
+
+  private
 
   def default_query_values
     self.class.params

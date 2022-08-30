@@ -17,4 +17,5 @@ group :test do
   gem 'minitest-focus'
   gem 'simplecov'
   gem 'vcr'
+  gem 'webmock'
 end

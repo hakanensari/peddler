@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'helper'
+require 'http'
 require 'peddler/errors/builder'
 
 class TestPeddlerErrorsBuilder < MiniTest::Test
@@ -20,11 +21,13 @@ class TestPeddlerErrorsBuilder < MiniTest::Test
           </Error>
         </ErrorResponse>
       XML
-      @cause = Excon::Error::NotFound.new(
-        'Expected(200) <=> Actual(404 Not Found)',
-        nil,
-        OpenStruct.new(body: body)
-      )
+      opts = {
+        status: 404,
+        body: body,
+        version: '1.1',
+        request: HTTP::Request.new(uri: 'https://example.com', verb: :get)
+      }
+      @cause = HTTP::Response.new(opts)
       super
     end
 
@@ -50,11 +53,13 @@ class TestPeddlerErrorsBuilder < MiniTest::Test
           </Error>
         </ErrorResponse>
       XML
-      @cause = Excon::Error::InternalServerError.new(
-        nil,
-        nil,
-        OpenStruct.new(body: body)
-      )
+      opts = {
+        status: 500,
+        body: body,
+        version: '1.1',
+        request: HTTP::Request.new(uri: 'https://example.com', verb: :get)
+      }
+      @cause = HTTP::Response.new(opts)
       super
     end
 
@@ -65,9 +70,13 @@ class TestPeddlerErrorsBuilder < MiniTest::Test
 
   class CausedByErrorWithNoErrorResponse < TestPeddlerErrorsBuilder
     def setup
-      @cause = Excon::Error::HTTPStatus.new(nil,
-                                            nil,
-                                            OpenStruct.new(body: nil))
+      opts = {
+        status: 500,
+        body: nil,
+        version: '1.1',
+        request: HTTP::Request.new(uri: 'https://example.com', verb: :get)
+      }
+      @cause = HTTP::Response.new(opts)
       super
     end
 
@@ -88,7 +97,13 @@ class TestPeddlerErrorsBuilder < MiniTest::Test
           </Error>
         </ErrorResponse>
       XML
-      @cause = Excon::Error::HTTPStatus.new(nil, nil, OpenStruct.new(body: body))
+      opts = {
+        status: 500,
+        body: body,
+        version: '1.1',
+        request: HTTP::Request.new(uri: 'https://example.com', verb: :get)
+      }
+      @cause = HTTP::Response.new(opts)
     end
 
     def test_throws_type_error
