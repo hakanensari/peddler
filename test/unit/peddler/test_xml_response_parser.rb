@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'helper'
+require 'old_helper'
 require 'peddler/xml_response_parser'
 
 class TestPeddlerXMLResponseParser < MiniTest::Test

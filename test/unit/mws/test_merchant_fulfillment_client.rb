@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'helper'
+require 'old_helper'
 require 'mws/merchant_fulfillment/client'
 
 class TestMWSMerchantFulfillmentClient < MiniTest::Test

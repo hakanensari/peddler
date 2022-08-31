@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'helper'
+require 'old_helper'
 require 'peddler/flat_file_parser'
 
 class TestPeddlerFlatFileParser < MiniTest::Test

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'helper'
+require 'old_helper'
 require 'mws/fulfillment_inventory/client'
 
 class TestMWSFulfillmentInventoryClient < MiniTest::Test

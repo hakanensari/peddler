@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'helper'
+require 'old_helper'
 require 'mws/easy_ship/client'
 
 # I'm just replicating the example payloads in the Amazon docs.

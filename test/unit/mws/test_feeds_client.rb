@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'helper'
+require 'old_helper'
 require 'mws/feeds/client'
 
 class TestMWSFeedsClient < MiniTest::Test

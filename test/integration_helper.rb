@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'credentials'
-require 'helper'
+require 'old_helper'
 require 'recorder'
 
 class IntegrationTest < MiniTest::Test

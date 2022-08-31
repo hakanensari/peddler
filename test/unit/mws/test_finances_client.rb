@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'helper'
+require 'old_helper'
 require 'mws/finances/client'
 
 class TestMWSFinancesClient < MiniTest::Test
