@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'credentials'
+require 'old_credentials'
 require 'old_helper'
 require 'recorder'
 
@@ -14,7 +14,7 @@ class IntegrationTest < MiniTest::Test
 
     def clients
       klass = MWS.const_get("#{current_endpoint}::Client")
-      ::Credentials.to_a.shuffle.each_with_object([]) do |credentials, memo|
+      OldCredentials.to_a.shuffle.each_with_object([]) do |credentials, memo|
         client = klass.new(credentials)
         country_code = client.marketplace.country_code
         memo.define_singleton_method(country_code.downcase) { client }
@@ -46,7 +46,7 @@ VCR.configure do |c|
     end
   end
 
-  Credentials.each do |record|
+  OldCredentials.each do |record|
     c.filter_sensitive_data('MERCHANT_ID') { record['merchant_id'] }
     c.filter_sensitive_data('AWS_ACCESS_KEY_ID') { record['aws_access_key_id'] }
   end

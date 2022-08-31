@@ -1,0 +1,53 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: https://api.amazon.com/auth/o2/token
+    body:
+      encoding: UTF-8
+      string: grant_type=client_credentials&scope=sellingpartnerapi%3A%3Anotifications&client_id=<SCRUBBED>&client_secret=<SCRUBBED>
+    headers:
+      User-Agent:
+      - Peddler/2.4.5 (Language=Ruby; Hakans-MacBook-Pro.local)
+      Connection:
+      - close
+      Content-Type:
+      - application/x-www-form-urlencoded
+      Host:
+      - api.amazon.com
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Server:
+      - Server
+      Date:
+      - Wed, 31 Aug 2022 16:20:03 GMT
+      Content-Type:
+      - application/json;charset=UTF-8
+      Content-Length:
+      - '454'
+      Connection:
+      - close
+      X-Amz-Rid:
+      - 6HHWY3KFAF6N2TFT9CK9
+      X-Amzn-Requestid:
+      - f876e911-e2b9-4ade-8ad3-406511333dd5
+      X-Amz-Date:
+      - Wed, 31 Aug 2022 16:20:03 GMT
+      Cache-Control:
+      - no-cache, no-store, must-revalidate
+      Pragma:
+      - no-cache
+      Vary:
+      - Content-Type,Accept-Encoding,X-Amzn-CDN-Cache,X-Amzn-AX-Treatment,User-Agent
+      Strict-Transport-Security:
+      - max-age=300; includeSubDomains; preload
+      Permissions-Policy:
+      - interest-cohort=()
+    body:
+      encoding: UTF-8
+      string: '{"access_token":"Atc|MQEBIDTXhdvhfXC7A41hYJEi_AdELk6Y4giz8Z3xMFlsD7cxL9H4N9mth34VnmMQGOgE9lTVmpHnud6-XJOQLKRsJWwYZay3CpPPvxld5ssJTIvLhM_IQANqIqK2m3tIrNLK7bS3Nz2HnLl24UjsIaVxwI44lfmJIZJHa5aec-BGOXmk7H2GCDiSnn9yFZK5ugDHIUJ2AzUMyAhcU_bl9ktseyQi1IXdY7LRwe-HC0N4lDpCopwMcBE-F2NBZKR5hRolhnLlJQ83x-wvhiTGkX-1C5_UvnSZZZ0SqnkfScVhDRYAjl3bQzON4i4JH87QzaGBXH3pxHlUlcMx20sT6iMxXQvR","scope":"sellingpartnerapi::notifications","token_type":"bearer","expires_in":3600}'
+  recorded_at: Wed, 31 Aug 2022 16:20:03 GMT
+recorded_with: VCR 6.1.0

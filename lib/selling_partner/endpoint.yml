@@ -1,0 +1,6 @@
+- aws_region: us-east-1
+  uri: https://sellingpartnerapi-na.amazon.com
+- aws_region: eu-west-1
+  uri: https://sellingpartnerapi-eu.amazon.com
+- aws_region: us-west-2
+  uri: https://sellingpartnerapi-fe.amazon.com

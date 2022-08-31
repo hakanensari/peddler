@@ -1,23 +1,19 @@
 # frozen_string_literal: true
 
-require 'forwardable'
+require 'vcr'
 require 'yaml'
 
-module Credentials
-  class << self
-    extend Forwardable
-    include Enumerable
-
-    attr_reader :all
-
-    def_delegators :all, :each
+%w[credentials.yml credentials.example.yml].each do |filename|
+  file = File.join(__dir__, filename)
+  if File.exist?(file)
+    CREDENTIALS = YAML.load_file(file, symbolize_names: true)
+    break
   end
+end
 
-  %w[mws.yml mws.example.yml].each do |path|
-    file = File.expand_path("../#{path}", __FILE__)
-    if File.exist?(file)
-      @all = YAML.load_file(file)
-      break
-    end
+
+VCR.configure do |c|
+  CREDENTIALS.map(&:values).flatten.each do |value|
+    c.filter_sensitive_data('<SCRUBBED>') { value }
   end
 end

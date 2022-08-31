@@ -1,0 +1,102 @@
+# frozen_string_literal: true
+
+require "selling_partner/api"
+
+module {{moduleName}}
+  {{#appName}}
+  # {{{.}}}
+  {{/appName}}
+  {{#appDescription}}
+  #
+  # {{{.}}}
+  {{/appDescription}}
+  {{#operations}}
+  class {{baseName}} < API
+    {{#operation}}
+    {{#summary}}
+    # {{{.}}}
+    #
+    {{/summary}}
+    {{#notes}}
+    # {{{.}}}
+    #
+    {{/notes}}
+    {{#allParams}}
+    {{#required}}
+    # @param {{paramName}} [{{{dataType}}}] {{description}}
+    {{/required}}
+    {{/allParams}}
+    # @param [Hash] opts the optional parameters
+    {{#allParams}}
+    {{^required}}
+    # @option opts [{{{dataType}}}] :{{paramName}} {{description}}{{#defaultValue}} (default to {{{.}}}){{/defaultValue}}
+    {{/required}}
+    {{/allParams}}
+    # @return [Array<({{{returnType}}}{{^returnType}}nil{{/returnType}}, Integer, Hash)>] {{#returnType}}{{{.}}} data{{/returnType}}{{^returnType}}nil{{/returnType}}, response status code and response headers
+    def {{operationId}}({{#allParams}}{{#required}}{{paramName}}, {{/required}}{{/allParams}}opts = {})
+      # resource path
+      local_var_path = '{{{path}}}'{{#pathParams}}.sub('{' + '{{baseName}}' + '}', CGI.escape({{paramName}}.to_s){{^strictSpecBehavior}}.gsub('%2F', '/'){{/strictSpecBehavior}}){{/pathParams}}
+
+      # query parameters
+      query_params = opts[:query_params] || {}
+      {{#queryParams}}
+      {{#required}}
+      query_params[:'{{{baseName}}}'] = {{#collectionFormat}}@api_client.build_collection_param({{{paramName}}}, :{{{collectionFormat}}}){{/collectionFormat}}{{^collectionFormat}}{{{paramName}}}{{/collectionFormat}}
+      {{/required}}
+      {{/queryParams}}
+      {{#queryParams}}
+      {{^required}}
+      query_params[:'{{{baseName}}}'] = {{#collectionFormat}}@api_client.build_collection_param(opts[:'{{{paramName}}}'], :{{{collectionFormat}}}){{/collectionFormat}}{{^collectionFormat}}opts[:'{{{paramName}}}']{{/collectionFormat}} if !opts[:'{{{paramName}}}'].nil?
+      {{/required}}
+      {{/queryParams}}
+
+      # header parameters
+      header_params = opts[:header_params] || {}
+      {{#hasProduces}}
+      # HTTP header 'Accept' (if needed)
+      header_params['Accept'] = @api_client.select_header_accept([{{#produces}}'{{{mediaType}}}'{{^-last}}, {{/-last}}{{/produces}}])
+      {{/hasProduces}}
+      {{#hasConsumes}}
+      # HTTP header 'Content-Type'
+      content_type = @api_client.select_header_content_type([{{#consumes}}'{{{mediaType}}}'{{^-last}}, {{/-last}}{{/consumes}}])
+      if !content_type.nil?
+          header_params['Content-Type'] = content_type
+      end
+      {{/hasConsumes}}
+      {{#headerParams}}
+      {{#required}}
+      header_params[:'{{{baseName}}}'] = {{#collectionFormat}}@api_client.build_collection_param({{{paramName}}}, :{{{collectionFormat}}}){{/collectionFormat}}{{^collectionFormat}}{{{paramName}}}{{/collectionFormat}}
+      {{/required}}
+      {{/headerParams}}
+      {{#headerParams}}
+      {{^required}}
+      header_params[:'{{{baseName}}}'] = {{#collectionFormat}}@api_client.build_collection_param(opts[:'{{{paramName}}}'], :{{{collectionFormat}}}){{/collectionFormat}}{{^collectionFormat}}opts[:'{{{paramName}}}']{{/collectionFormat}} if !opts[:'{{{paramName}}}'].nil?
+      {{/required}}
+      {{/headerParams}}
+
+      # http body (model)
+      post_body = opts[:debug_body]{{#bodyParam}} || @api_client.object_to_http_body({{#required}}{{{paramName}}}{{/required}}{{^required}}opts[:'{{{paramName}}}']{{/required}}){{/bodyParam}}
+
+      # return_type
+      return_type = opts[:debug_return_type]{{#returnType}} || '{{{.}}}'{{/returnType}}
+
+      new_options = opts.merge(
+        :operation => :"{{classname}}.{{operationId}}",
+        :header_params => header_params,
+        :query_params => query_params,
+        :body => post_body,
+        :auth_names => auth_names,
+        :return_type => return_type
+      )
+
+      data, status_code, headers = @api_client.call_api(:{{httpMethod}}, local_var_path, new_options)
+
+      data, status_code, headers
+    end
+{{^-last}}
+
+{{/-last}}
+{{/operation}}
+{{/operations}}
+  end
+end

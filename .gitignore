@@ -3,6 +3,7 @@ Gemfile.lock
 .yardoc
 bin
 coverage
+credentials.yml
 doc
 gemfiles/*.gemfile.lock
 pkg
